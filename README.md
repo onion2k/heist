@@ -15,7 +15,7 @@ and the grading a real stone of that kind would carry.
 
 Needs WebGPU: a current Chrome, Edge or Safari.
 
-The trace converging needs artshape-render v0.13.2 or later, which is
+The trace converging needs artshape-render v0.13.3 or later, which is
 what package.json pins: before it, the viewer's pacing judged a trace's
 sample-a-frame as a slow run and its ladder restarted the accumulation
 every third of a second.
