@@ -48,7 +48,11 @@ describe('measurements', () => {
     expect(m.pavilionAngle).toBeLessThan(46);
     expect(m.culetWidth).toBe(0);
     expect(a.counts.girdle).toBe(16);
-    expect(a.bands.map((b) => b.zone)).toEqual(['crown', 'crown', 'pavilion', 'pavilion']);
+    expect(a.facets.length).toBe(73);
+    expect(a.bands.map((b) => b.label)).toEqual(['upper-girdle facets', 'bezel (kite) facets', 'star facets', 'lower-girdle facets', 'pavilion mains']);
+    // the angles are the bezels' and the mains', as the trade measures them
+    expect(m.crownAngle).toBeCloseTo(34.5, 1);
+    expect(m.pavilionAngle).toBeCloseTo(40.75, 1);
   });
 
   it('a step cut has a keel, not a point, and only quadrilaterals', () => {

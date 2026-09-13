@@ -58,6 +58,12 @@ const state = {
   depth: null as number | null,
   table: null as number | null,
   facets: null as number | null,
+  /** The brilliant's own, for the round and the oval; null for the trade's ideals. */
+  crownAngle: null as number | null,
+  pavilionAngle: null as number | null,
+  star: null as number | null,
+  lowerHalf: null as number | null,
+  culet: null as number | null,
   pose: 'standing' as Pose,
   clarity: 'VS1',
   colour: 'F',
@@ -112,6 +118,8 @@ function build(reframe = false) {
     cut: state.cut, width: state.width,
     length: state.length ?? undefined, depth: state.depth ?? undefined, table: state.table ?? undefined,
     facets: state.facets ?? undefined,
+    crownAngle: state.crownAngle ?? undefined, pavilionAngle: state.pavilionAngle ?? undefined,
+    star: state.star ?? undefined, lowerHalf: state.lowerHalf ?? undefined, culet: state.culet ?? undefined,
   };
   part = gem(spec);
   part.material = { metal: state.species, finish: 'polished' };
@@ -211,10 +219,16 @@ function updateStatus() {
 const degrees = (v: number) => `${Math.round((v * 180) / Math.PI)}°`;
 let lengthSlider: ReturnType<typeof slider>, depthSlider: ReturnType<typeof slider>, tableSlider: ReturnType<typeof slider>, facetsSlider: ReturnType<typeof slider>;
 const facetsApplies = (cut: GemCut) => !['step', 'baguette', 'cabochon'].includes(cut);
+const isBrilliant = (cut: GemCut) => cut === 'brilliant' || cut === 'oval';
+let brilliantSet: HTMLFieldSetElement;
+let crownAngleSlider: ReturnType<typeof slider>, pavilionAngleSlider: ReturnType<typeof slider>, starSlider: ReturnType<typeof slider>, lowerHalfSlider: ReturnType<typeof slider>, culetSlider: ReturnType<typeof slider>;
 
 /** Put the proportion sliders back to what the cut gives on its own. */
 function resetProportions() {
   state.length = state.depth = state.table = state.facets = null;
+  state.crownAngle = state.pavilionAngle = state.star = state.lowerHalf = state.culet = null;
+  crownAngleSlider.set(34.5); pavilionAngleSlider.set(40.75); starSlider.set(50); lowerHalfSlider.set(78); culetSlider.set(0);
+  brilliantSet.hidden = !isBrilliant(state.cut);
   const n = natural(state.cut, state.width);
   lengthSlider.set(n.length);
   depthSlider.set(n.depth);
@@ -260,6 +274,12 @@ const resetRow = el('div', 'actions');
 const resetBtn = el('button', '', 'the cut\'s own proportions');
 resetBtn.addEventListener('click', () => { resetProportions(); build(); });
 resetRow.append(resetBtn);
+crownAngleSlider = slider('crown angle', 20, 45, 0.25, 34.5, (v) => `${v.toFixed(2)}°`, (v) => { state.crownAngle = v; state.depth = null; depthSlider.set(natural(state.cut, state.width).depth); build(); });
+pavilionAngleSlider = slider('pavilion angle', 35, 46, 0.25, 40.75, (v) => `${v.toFixed(2)}°`, (v) => { state.pavilionAngle = v; state.depth = null; build(); });
+starSlider = slider('star length', 30, 75, 1, 50, (v) => `${v} %`, (v) => { state.star = v / 100; build(); });
+lowerHalfSlider = slider('lower half length', 55, 90, 1, 78, (v) => `${v} %`, (v) => { state.lowerHalf = v / 100; build(); });
+culetSlider = slider('culet', 0, 12, 0.5, 0, (v) => (v === 0 ? 'none' : `${v} %`), (v) => { state.culet = v / 100; build(); });
+brilliantSet = section('The brilliant', crownAngleSlider, pavilionAngleSlider, starSlider, lowerHalfSlider, culetSlider);
 const proportionSet = section('Proportions', lengthSlider, depthSlider, tableSlider, facetsSlider, resetRow);
 
 const applyKey = () => {
@@ -295,7 +315,7 @@ const viewSet = section('View',
   toggle('callouts', state.callouts, (v) => { state.callouts = v; callouts.visible = v; callouts.update(); }),
   traceNote,
 );
-controlsEl.append(stoneSet, proportionSet, viewSet, lightSet);
+controlsEl.append(stoneSet, proportionSet, brilliantSet, viewSet, lightSet);
 
 // the notes' width is what the callout column keeps clear of, and it follows the window
 new ResizeObserver(() => { callouts.reserveRight = state.overlay ? overlayEl.offsetWidth : 0; callouts.update(); }).observe(overlayEl);

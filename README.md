@@ -15,7 +15,7 @@ and the grading a real stone of that kind would carry.
 
 Needs WebGPU: a current Chrome, Edge or Safari.
 
-The trace converging needs artshape-render v0.13.3 or later, which is
+The trace converging needs artshape-render v0.14.0 or later, which is
 what package.json pins: before it, the viewer's pacing judged a trace's
 sample-a-frame as a slow run and its ladder restarted the accumulation
 every third of a second.
@@ -27,8 +27,10 @@ its published index of refraction and dispersion — in nine cuts: round,
 oval, pear, marquise and trillion brilliants, the emerald (step) cut, the
 baguette, the rose and the cabochon. Width, length, depth, table and the
 count of facets round the girdle can be set by hand or left to the cut's
-own proportions; the pose stands the stone on its culet, lays it table
-down, or turns it on its side.
+own proportions, and the round and the oval — built as the trade cuts
+them, from the crown and pavilion angles, the star and lower-half lengths
+and the culet — take those too; the pose stands the stone on its culet,
+lays it table down, or turns it on its side.
 
 **Measured, not typed.** Every number on the cards is read back off the
 mesh the renderer draws. The facets are recovered from the triangles

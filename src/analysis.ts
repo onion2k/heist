@@ -249,9 +249,14 @@ export function analyse(part: Part, names: BandNames): Analysis {
   const tableLength = table ? 2 * top.halfLength : 0;
   const culetWidth = bottom.halfWidth > 1e-4 && pavilionDepth > 0 ? 2 * bottom.halfWidth : 0;
 
-  const crownBand = bands.find((b) => b.zone === 'crown' && b.index === 0);
+  // the crown angle is the bezels': the crown band that reaches from the
+  // girdle to the table, where a layout has one, else the band on the girdle
+  const crownBands = bands.filter((b) => b.zone === 'crown');
+  const bezels = crownBands.find((b) => Math.abs(b.zFrom - girdleTop) < 1e-3 && Math.abs(b.zTo - maxZ) < 1e-3);
+  const crownBand = bezels ?? crownBands[0];
+  // and the pavilion angle the mains': the band that reaches the culet
   const pavilionBands = bands.filter((b) => b.zone === 'pavilion');
-  const mains = pavilionBands.length ? pavilionBands[pavilionBands.length - 1] : undefined;
+  const mains = pavilionBands.find((b) => Math.abs(b.zTo - minZ) < 1e-3) ?? pavilionBands[pavilionBands.length - 1];
 
   const measure: Measurements = {
     width, length, depth, crownHeight, pavilionDepth, girdleThickness: girdleTop - girdleBottom,

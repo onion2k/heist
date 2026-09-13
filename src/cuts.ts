@@ -41,8 +41,13 @@ export interface CutInfo {
   suits: string;
 }
 
+/** The trade's rows, as the round and the oval are built; the fancy outlines are built from tiers and come out as bands of triangles. */
 const BRILLIANT_BANDS = {
-  crown: ['bezel (kite) and upper-girdle facets', 'star facets'],
+  crown: ['upper-girdle facets', 'bezel (kite) facets', 'star facets'],
+  pavilion: ['lower-girdle facets', 'pavilion mains'],
+};
+const TIERED_BANDS = {
+  crown: ['bezel and upper-girdle facets', 'star facets'],
   pavilion: ['lower-girdle facets', 'pavilion mains'],
 };
 
@@ -51,7 +56,7 @@ export const CUTS: Record<GemCut, CutInfo> = {
     key: 'brilliant', name: 'Round brilliant', family: 'brilliant', aka: 'round, RBC, "diamond cut"',
     description: 'The cut that returns the most light: a round girdle, a crown of kites and stars over it, and a pavilion of mains and halves under it meeting at a point. Every facet is angled so that light entering the table is reflected off both sides of the pavilion and sent back out through the crown.',
     history: 'Worked out by trial in Venice and Antwerp through the seventeenth century, and by calculation in Marcel Tolkowsky\'s 1919 thesis, which set the angles the trade still quotes. Ninety per cent of the diamonds sold are round brilliants.',
-    canonical: '57 facets, 58 with a culet: 1 table, 8 stars, 8 bezels, 16 upper halves; 16 lower halves, 8 mains',
+    canonical: '57 facets, 58 with a culet: 1 table, 8 stars, 8 bezels, 16 upper halves; 16 lower halves, 8 mains — and 16 round the girdle, which the trade does not count',
     guide: { table: '52–62 %', depth: '57.5–63 %', crownAngle: '31.5–36.5°', pavilionAngle: '40.6–41.8°', girdle: 'thin to slightly thick', ratio: '1.00–1.02', note: 'the GIA\'s "Excellent" ranges for a round diamond' },
     bands: BRILLIANT_BANDS,
     suits: 'Diamond above all, and any stone with fire to show. In a coloured stone it lightens the colour, which suits a dark garnet and can wash out a pale aquamarine.',
@@ -71,7 +76,7 @@ export const CUTS: Record<GemCut, CutInfo> = {
     history: 'The pendeloque of the fifteenth century, from Lodewyk van Berquem of Bruges, who is credited with the first symmetrical faceting. The Cullinan I, at 530 carats, is a pear.',
     canonical: '58 facets, typically: the round\'s arrangement, with the pavilion mains gathered toward the point',
     guide: { table: '53–63 %', depth: '58–66 %', ratio: '1.45–1.75', girdle: 'thin to slightly thick, thicker at the point', note: 'trade-typical ranges' },
-    bands: BRILLIANT_BANDS,
+    bands: TIERED_BANDS,
     suits: 'Anything worn hanging: drops, pendants. Aquamarine and the paler beryls take the shape well because the point does not go dark.',
   },
   marquise: {
@@ -80,7 +85,7 @@ export const CUTS: Record<GemCut, CutInfo> = {
     history: 'Ordered by Louis XV, the story goes, to match the smile of the Marquise de Pompadour; navette is the French for a little boat.',
     canonical: '58 facets, typically',
     guide: { table: '53–63 %', depth: '58–65 %', ratio: '1.75–2.25', girdle: 'thin to slightly thick, thicker at the points', note: 'trade-typical ranges' },
-    bands: BRILLIANT_BANDS,
+    bands: TIERED_BANDS,
     suits: 'Diamond, for the spread; ruby and sapphire, for elongated rough. A poor choice for a soft or cleavable stone because of the points.',
   },
   trillion: {
@@ -89,7 +94,7 @@ export const CUTS: Record<GemCut, CutInfo> = {
     history: 'An Amsterdam cut of 1962, from the Asscher family, and trademarked as the "Trilliant" in America by Leon Finker in the 1970s; it became the standard side stone of the 1980s.',
     canonical: '31 to 50 facets depending on the maker; 44 is common',
     guide: { table: '55–65 %', depth: '32–48 %', ratio: '1.00 (equilateral)', girdle: 'medium to thick at the corners', note: 'trade-typical ranges; a trillion is cut shallow on purpose' },
-    bands: BRILLIANT_BANDS,
+    bands: TIERED_BANDS,
     suits: 'Side stones beside a centre stone; any brightly coloured stone that can afford to be shallow — garnet, sapphire, tourmaline.',
   },
   step: {

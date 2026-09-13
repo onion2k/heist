@@ -160,7 +160,9 @@ export function facetsCard(s: Specimen, h: FacetHandlers): { card: HTMLDivElemen
   pairs.push(['planes the tracer bends light through', `${a.planes}`]);
   pairs.push(['triangles · vertices', `${a.triangles} · ${a.vertices}`]);
   c.append(rows(pairs));
-  c.append(el('p', 'small dim', 'The model builds a stone from an outline and a stack of tiers, so a brilliant\'s bezels and upper halves come out as one band of triangles rather than the trade\'s kites and halves; the counts above are the model\'s own, and the canonical line is the real cut\'s.'));
+  c.append(el('p', 'small dim', s.cut.key === 'brilliant' || s.cut.key === 'oval'
+    ? 'The round and the oval are built as the trade cuts them: the bezel plane is set by the crown angle, the star tips and upper-half apexes lie on it, and the mains and lower halves the same way under the girdle. The count above includes the girdle facets, which the trade leaves out.'
+    : 'The fancy outlines and the step cuts are built from an outline and a stack of tiers, so a pear\'s bezels and upper halves come out as one band of triangles rather than the trade\'s kites and halves; the counts above are the model\'s own, and the canonical line is the real cut\'s.'));
   const highlight = (f: Facet | null) => {
     for (const p of [...crown.querySelectorAll('.facet'), ...pav.querySelectorAll('.facet')]) p.classList.remove('on');
     if (!f) return;
