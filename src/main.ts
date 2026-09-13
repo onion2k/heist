@@ -18,6 +18,7 @@ import { clarityScale, SPECIES, speciesKeys } from './gems';
 import { meanRadiance } from 'artshape-render/render/hdr';
 import { LIGHTINGS, lightingByKey } from './lighting';
 import { calloutsFor, Callouts, cutCard, describeFacet, facetsCard, gradingCard, headerCard, opticsCard, stoneCard, TABS, type Specimen, type Tab } from './overlay';
+import { section as sectionOf } from './rays';
 import { RIGS, rigNames } from './rigs';
 import { el, picker, section, slider, toggle } from './ui';
 
@@ -80,6 +81,7 @@ const state = {
   /** A baked preset, or one of the gemmologist's lights. */
   lighting: 'studio',
   tab: 'cut' as Tab,
+  rayTilt: 0,
   overlay: true,
   callouts: true,
   quality: 'traced' as Quality,
@@ -105,6 +107,7 @@ function natural(cut: GemCut, width: number) {
 
 let part: Part;
 let analysis: Analysis;
+let sectionPoly: ReturnType<typeof sectionOf> = [];
 const callouts = new Callouts(document.getElementById('callouts') as unknown as SVGSVGElement, document.getElementById('calloutTags')!, viewer);
 let held: Facet | null = null;
 let piece = { span: 10, top: 2 };
@@ -119,6 +122,7 @@ function specimen(): Specimen {
     clarity: scale.find((g) => g.code === state.clarity) ?? scale[Math.min(3, scale.length - 1)],
     colour: { key: state.colour, ...colourNote(state.species, state.colour) },
     lightingNote: lighting?.analysis ? lighting.note : undefined,
+    section: sectionPoly,
     material: { ior: mat.ior ?? 1.5, dispersion: mat.dispersion ?? 0, colour: mat.colour ?? [1, 1, 1], sparkle: mat.sparkle ?? 0 },
   };
 }
@@ -138,6 +142,7 @@ function build(reframe = false) {
   // the species' optics in the colour chosen, registered with the renderer under its own name
   part.material = { metal: colouredMaterial(state.species, state.colour, state.tone, state.saturation), finish: 'polished' };
   analysis = analyse(part, CUTS[state.cut].bands);
+  sectionPoly = sectionOf(part.mesh);
 
   const assembly = new Assembly('stone');
   const pose = POSES[state.pose]();
@@ -203,7 +208,7 @@ function renderOverlay() {
       break;
     }
     case 'stone': overlayEl.append(stoneCard(s)); break;
-    case 'optics': overlayEl.append(opticsCard(s)); break;
+    case 'optics': overlayEl.append(opticsCard(s, state.rayTilt, (v) => { state.rayTilt = v; })); break;
     case 'grading':
       overlayEl.append(gradingCard(s, (code) => { state.clarity = code; renderOverlay(); }, (code) => { state.colour = code; colourHost.replaceChildren(colourPicker()); build(); }));
       break;

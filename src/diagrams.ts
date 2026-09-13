@@ -5,6 +5,7 @@
  * an ideal one.
  */
 import type { Analysis, Facet, Zone } from './analysis';
+import type { P2, Ray } from './rays';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -120,5 +121,31 @@ export function profileDiagram(a: Analysis, size = 260): SVGSVGElement {
   };
   angle((top + gTop) / 2, m.crownAngle, 'crown');
   angle((bottom + gBot) / 2, m.pavilionAngle, 'pavilion');
+  return s;
+}
+
+/**
+ * Light through the section: the profile as the plane through the axis
+ * cuts it, and rays followed through by the species' index. Green came
+ * back through the crown, red left through the pavilion, amber through
+ * the girdle, grey was given up.
+ */
+export function rayDiagram(poly: P2[], rays: Ray[], size = 300): SVGSVGElement {
+  const ys = poly.map((p) => p[0]), zs = poly.map((p) => p[1]);
+  const halfW = Math.max(...ys.map(Math.abs)) || 1;
+  const top = Math.max(...zs), bottom = Math.min(...zs);
+  const padX = halfW * 0.7, padTop = (top - bottom) * 0.55, padBottom = (top - bottom) * 0.35;
+  const x0 = -halfW - padX, x1 = halfW + padX, y0 = -top - padTop, y1 = -bottom + padBottom;
+  const s = svg('svg', { viewBox: `${x0} ${y0} ${x1 - x0} ${y1 - y0}`, width: size, class: 'rays', preserveAspectRatio: 'xMidYMid meet' }) as SVGSVGElement;
+  s.style.height = `${(size * (y1 - y0)) / (x1 - x0)}px`;
+  const d = poly.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(4)} ${(-p[1]).toFixed(4)}`).join(' ') + ' Z';
+  s.append(svg('path', { d, fill: 'var(--f-crown1)', stroke: 'var(--f-line)', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke', opacity: 0.85 }));
+  const colour: Record<Ray['outcome'], string> = { crown: 'var(--good)', pavilion: 'var(--bad)', girdle: 'var(--warn)', lost: 'var(--dim)' };
+  for (const r of rays) {
+    const pts = r.points.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(4)} ${(-p[1]).toFixed(4)}`).join(' ');
+    s.append(svg('path', { d: pts, fill: 'none', stroke: colour[r.outcome], 'stroke-width': 1.2, 'vector-effect': 'non-scaling-stroke', opacity: 0.9 }));
+    const last = r.points[r.points.length - 1];
+    s.append(svg('circle', { cx: last[0], cy: -last[1], r: halfW * 0.025, fill: colour[r.outcome] }));
+  }
   return s;
 }

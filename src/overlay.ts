@@ -8,7 +8,8 @@ import type { Vec3 } from 'artshape-render/geom/types';
 import type { Viewer } from 'artshape-render/render/viewer';
 import { carats, criticalAngle, fmt, fresnel, type Analysis, type Facet, type Zone } from './analysis';
 import type { CutInfo } from './cuts';
-import { planDiagram, profileDiagram, facetColour } from './diagrams';
+import { planDiagram, profileDiagram, rayDiagram, facetColour } from './diagrams';
+import { lightReturn, traceRays, type P2 } from './rays';
 import { clarityScale, clarityTypeNote, DIAMOND_COLOUR, type ClarityGrade, type Species } from './gems';
 import { el } from './ui';
 
@@ -21,6 +22,8 @@ export interface Specimen {
   colour: { key: string; name: string; note: string };
   /** What the lighting means, when it is an analysis map rather than a light. */
   lightingNote?: string;
+  /** The stone cut through its axis across the width, for the rays. */
+  section: P2[];
   /** The renderer's material record for the species, as it traces with it. */
   material: { ior: number; dispersion: number; colour: [number, number, number]; sparkle: number };
 }
@@ -219,9 +222,44 @@ export function stoneCard(s: Specimen): HTMLDivElement {
   return c;
 }
 
-export function opticsCard(s: Specimen): HTMLDivElement {
+/**
+ * Light through the stone: the section, rays through it at a tilt the
+ * reader sets, and the count of where they went. Redrawn in place as the
+ * slider moves, without the card.
+ */
+export function raysFigure(s: Specimen, tilt: number, onTilt: (v: number) => void): HTMLDivElement {
+  const wrap = el('div');
+  const m = s.analysis.measure;
+  const girdle: [number, number] = [m.girdleThickness / 2, -m.girdleThickness / 2];
+  const fig = el('div', 'figure');
+  const stat = el('p', 'small');
+  const draw = (t: number) => {
+    const rays = traceRays(s.section, s.material.ior, { count: 11, tilt: t, girdle });
+    const r = lightReturn(s.section, s.material.ior, girdle, t);
+    fig.replaceChildren(rayDiagram(s.section, rays, 300), document.createTextNode(`light from ${t === 0 ? 'straight above' : `${t}° off the vertical`}, through the section across the width`));
+    stat.innerHTML = `Of the light from ${t === 0 ? 'above' : `${t}° over`}, <b style="color:var(--good)">${Math.round(r.crown * 100)} %</b> comes back through the crown, `
+      + `<b style="color:var(--bad)">${Math.round(r.pavilion * 100)} %</b> leaks through the pavilion, <b style="color:var(--warn)">${Math.round(r.girdle * 100)} %</b> through the girdle`
+      + (r.lost > 0 ? `, and ${Math.round(r.lost * 100)} % is still bouncing after twelve reflections` : '') + '.';
+  };
+  draw(tilt);
+  const row = el('label', 'field');
+  row.innerHTML = `<div class="row"><span>light from</span><b></b></div>`;
+  const input = el('input');
+  input.type = 'range'; input.min = '0'; input.max = '60'; input.step = '2'; input.value = String(tilt);
+  const out = row.querySelector('b')!;
+  out.textContent = tilt === 0 ? 'straight above' : `${tilt}° over`;
+  input.addEventListener('input', () => { const v = Number(input.value); out.textContent = v === 0 ? 'straight above' : `${v}° over`; onTilt(v); draw(v); });
+  row.append(input);
+  wrap.append(fig, stat, row);
+  wrap.append(el('p', 'small dim', `Rays are followed in two dimensions through the section by Snell's law with the index ${s.material.ior.toFixed(3)}: in at the crown, reflected off the pavilion where the angle beats the critical ${criticalAngle(s.material.ior).toFixed(1)}°, and out where it does not. The diagram follows the refracted path only, so it says where the cut sends its light and not how much; the tracer says the rest. Move the pavilion angle in the panel and watch the leaks.`));
+  return wrap;
+}
+
+export function opticsCard(s: Specimen, rayTilt = 0, onTilt: (v: number) => void = () => {}): HTMLDivElement {
   const sp = s.species, mat = s.material;
   const c = card('Optics', 'as published, and as traced');
+  c.append(el('h2', '', 'Light through the stone'));
+  c.append(raysFigure(s, rayTilt, onTilt));
   const crit = criticalAngle(mat.ior);
   const f0 = fresnel(mat.ior);
   const lin = (v: number) => Math.round(Math.pow(Math.max(v, 0), 1 / 2.2) * 255);

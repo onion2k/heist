@@ -55,6 +55,15 @@ in red, green and blue, where its light is returned from and where it
 leaks. The key and the rig are put out while one is on, and the card over
 the picture says how to read it.
 
+**Light through the stone.** The Optics card cuts the mesh through its
+axis and follows rays through the section by Snell's law with the
+species' index: in at the crown, reflected off the pavilion where the
+angle beats the critical angle, out where it does not. Green came back
+through the crown, red leaked through the pavilion; a slider tilts the
+light, and a count over sixty rays says how much returns. Move the
+pavilion angle and watch the leaks, which is what the guide ranges are
+about.
+
 **Measured, not typed.** Every number on the cards is read back off the
 mesh the renderer draws. The facets are recovered from the triangles
 (analysis.ts), classified into table, crown, girdle, pavilion and culet,
@@ -81,6 +90,7 @@ got. Draft and final are there for working in.
     src/gems.ts      the species: composition, optics, sources, grading scales
     src/colours.ts   the letters and the varieties, as materials the tracer carries
     src/lighting.ts  the ASET, the ideal-scope, the dark-field and the grading lamp
+    src/rays.ts      the section through the axis, and rays through it by Snell's law
     src/cuts.ts      the cuts: history, canonical facet counts, guide ranges
     src/rigs.ts      studio lighting presets, after the sketchbook's
 
