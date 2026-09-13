@@ -1,17 +1,28 @@
 /** The controls: a picker, a slider, a toggle, each a labelled row. */
 
-export function picker(label: string, options: Array<string | { value: string; label: string }>, value: string, onChange: (v: string) => void): HTMLLabelElement {
+export type Option = string | { value: string; label: string };
+export interface OptionGroup { group: string; options: Option[] }
+
+export function picker(label: string, options: Array<Option | OptionGroup>, value: string, onChange: (v: string) => void): HTMLLabelElement {
   const wrap = document.createElement('label');
   wrap.className = 'field';
   const row = document.createElement('div');
   row.className = 'row';
   row.innerHTML = `<span>${label}</span>`;
   const sel = document.createElement('select');
-  for (const o of options) {
+  const add = (into: HTMLElement, o: Option) => {
     const opt = document.createElement('option');
     opt.value = typeof o === 'string' ? o : o.value;
     opt.textContent = typeof o === 'string' ? o : o.label;
-    sel.append(opt);
+    into.append(opt);
+  };
+  for (const o of options) {
+    if (typeof o === 'object' && 'group' in o) {
+      const g = document.createElement('optgroup');
+      g.label = o.group;
+      for (const x of o.options) add(g, x);
+      sel.append(g);
+    } else add(sel, o);
   }
   sel.value = value;
   sel.addEventListener('change', () => onChange(sel.value));

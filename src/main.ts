@@ -12,7 +12,7 @@ import type { EnvPreset } from 'artshape-render/render/env';
 import { metals } from 'artshape-render/render/materials';
 import { Viewer, tableNames, type Quality, type TableName } from 'artshape-render/render/viewer';
 import { analyse, carats, type Analysis, type Facet } from './analysis';
-import { CUTS, cutKeys } from './cuts';
+import { CUTS, cutKeys, FAMILIES } from './cuts';
 import { colourChoices, colourNote, colouredMaterial } from './colours';
 import { clarityScale, SPECIES, speciesKeys } from './gems';
 import { meanRadiance } from 'artshape-render/render/hdr';
@@ -232,7 +232,8 @@ function updateStatus() {
 
 const degrees = (v: number) => `${Math.round((v * 180) / Math.PI)}°`;
 let lengthSlider: ReturnType<typeof slider>, depthSlider: ReturnType<typeof slider>, tableSlider: ReturnType<typeof slider>, facetsSlider: ReturnType<typeof slider>;
-const facetsApplies = (cut: GemCut) => !['step', 'baguette', 'cabochon'].includes(cut);
+/** The count of facets round the girdle applies where the outline is a curve sampled round; a polygon's corners are its corners. */
+const facetsApplies = (cut: GemCut) => CUTS[cut].curved;
 const isBrilliant = (cut: GemCut) => cut === 'brilliant' || cut === 'oval';
 let brilliantSet: HTMLFieldSetElement;
 let crownAngleSlider: ReturnType<typeof slider>, pavilionAngleSlider: ReturnType<typeof slider>, starSlider: ReturnType<typeof slider>, lowerHalfSlider: ReturnType<typeof slider>, culetSlider: ReturnType<typeof slider>;
@@ -249,7 +250,7 @@ function resetProportions() {
   tableSlider.set(n.table * 100);
   facetsSlider.set(n.facets);
   facetsSlider.hidden = !facetsApplies(state.cut);
-  tableSlider.hidden = state.cut === 'rose' || state.cut === 'cabochon';
+  tableSlider.hidden = !CUTS[state.cut].hasTable;
 }
 
 const colourHost = el('div');
@@ -269,7 +270,7 @@ const stoneSet = section('Stone',
     colourHost.replaceChildren(colourPicker());
     build();
   }),
-  picker('cut', cutKeys.map((k) => ({ value: k, label: CUTS[k].name })), state.cut, (v) => {
+  picker('cut', FAMILIES.map((f) => ({ group: f.name, options: cutKeys.filter((k) => CUTS[k].family === f.key).map((k) => ({ value: k, label: CUTS[k].name })) })), state.cut, (v) => {
     state.cut = v as GemCut;
     resetProportions();
     build(true);

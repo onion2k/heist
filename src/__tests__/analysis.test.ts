@@ -6,8 +6,11 @@ import { CUTS, cutKeys } from '../cuts';
 const stone = (cut: GemCut, width = 6.5) => gem({ cut, width });
 
 describe('reading facets back from the mesh', () => {
+  /** The faceted cuts: everything the renderer traces through planes. */
+  const faceted = cutKeys.filter((c) => stone(c).gemPlanes);
+
   it('finds every triangle once, in polygons that are planar', () => {
-    for (const cut of cutKeys.filter((c) => c !== 'cabochon')) {
+    for (const cut of faceted) {
       const part = stone(cut);
       const facets = readFacets(part.mesh);
       const triangles = facets.reduce((n, f) => n + f.length - 2, 0);
@@ -20,14 +23,23 @@ describe('reading facets back from the mesh', () => {
     }
   });
 
-  it('counts as many facets as the renderer has planes', () => {
-    for (const cut of cutKeys.filter((c) => c !== 'cabochon')) {
+  it('counts as many facets as the renderer has planes, and a table where the cut has one', () => {
+    for (const cut of faceted) {
       const part = stone(cut);
       const a = analyse(part, CUTS[cut].bands);
       // the renderer dedups planes; a facet count that matched exactly would
       // mean no two facets are coplanar, which the table and a girdle facet never are
       expect(a.facets.length, cut).toBeGreaterThanOrEqual(a.planes);
-      expect(a.counts.table, cut).toBe(cut === 'rose' ? 0 : 1);
+      expect(a.counts.table, cut).toBe(CUTS[cut].hasTable ? 1 : 0);
+    }
+    expect(faceted.length).toBe(cutKeys.length - 2);
+  });
+
+  it('every cut in the renderer has a sheet, and every band of the model has a name', () => {
+    for (const cut of cutKeys) {
+      const a = analyse(stone(cut), CUTS[cut].bands);
+      expect(CUTS[cut].name, cut).toBeTruthy();
+      for (const b of a.bands) expect(b.label, `${cut} ${b.zone} ${b.index}`).not.toMatch(/band \d/);
     }
   });
 });

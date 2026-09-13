@@ -15,7 +15,7 @@ and the grading a real stone of that kind would carry.
 
 Needs WebGPU: a current Chrome, Edge or Safari.
 
-The trace converging needs artshape-render v0.14.1 or later, which is
+The trace converging needs artshape-render v0.15.0 or later, which is
 what package.json pins: before it, the viewer's pacing judged a trace's
 sample-a-frame as a slow run and its ladder restarted the accumulation
 every third of a second.
@@ -23,9 +23,17 @@ every third of a second.
 ## What it shows
 
 **The stone.** Twelve species — the renderer's gem materials, each with
-its published index of refraction and dispersion — in nine cuts: round,
-oval, pear, marquise and trillion brilliants, the emerald (step) cut, the
-baguette, the rose and the cabochon. Width, length, depth, table and the
+its published index of refraction and dispersion — in thirty-three cuts,
+which is meant to be every style a cutter has a name for. The brilliants:
+round, oval, pear, marquise, heart, trillion, cushion, princess and
+radiant. The old and single cuts: old European, old mine, the eight cut
+and the Swiss. The step cuts: emerald, asscher, baguette and tapered
+baguette, carré, table cut and French cut. The calibrated shapes cut in
+steps: hexagon, octagon, kite, lozenge, shield, half-moon and bullet. And
+the rest: rose and double rose, briolette, checkerboard, cabochon and
+double cabochon. Each has its sheet — what it is, where it came from,
+its canonical facet count, the trade's guide proportions, and what its
+rows of facets are called. Width, length, depth, table and the
 count of facets round the girdle can be set by hand or left to the cut's
 own proportions, and the round and the oval — built as the trade cuts
 them, from the crown and pavilion angles, the star and lower-half lengths

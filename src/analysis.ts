@@ -199,7 +199,9 @@ export function analyse(part: Part, names: BandNames): Analysis {
       if (nz > 0.9999) zone = 'table';
       else if (nz < -0.9999) zone = area > girdleArea * 0.3 ? 'back' : 'culet';
       else if (Math.abs(nz) < 0.02) zone = 'girdle';
-      else zone = nz > 0 ? 'crown' : 'pavilion';
+      // which side of the girdle it lies on, rather than which way it leans:
+      // a facet in a heart's cleft can lean down a hair and still be crown
+      else zone = centroid[2] >= 0 ? 'crown' : 'pavilion';
       facets.push({ index: facets.length, points, normal, centroid, area, angle, zone, band: 0 });
     }
   }
