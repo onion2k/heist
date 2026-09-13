@@ -15,12 +15,10 @@ and the grading a real stone of that kind would carry.
 
 Needs WebGPU: a current Chrome, Edge or Safari.
 
-The trace converging needs a renderer newer than v0.13.0: the viewer's
-pacing there judged a trace's sample-a-frame as a slow run, stepped its
-ladder down, and the resize restarted the accumulation every third of a
-second. The fix is a few lines in artshape-render's `render/viewer.ts`,
-made in the local checkout this project links; until it is tagged, link
-rather than install.
+The trace converging needs artshape-render v0.13.2 or later, which is
+what package.json pins: before it, the viewer's pacing judged a trace's
+sample-a-frame as a slow run and its ladder restarted the accumulation
+every third of a second.
 
 ## What it shows
 
