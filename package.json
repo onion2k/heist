@@ -1,0 +1,23 @@
+{
+  "name": "heist",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "A gemmologist's bench: cut stones drawn by a path tracer, with everything about the cut, the facets and the species laid over them.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "artshape-render": "github:onion2k/artshape-render#v0.13.0"
+  },
+  "devDependencies": {
+    "@webgpu/types": "^0.1.72",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vitest": "^3.2.7"
+  }
+}

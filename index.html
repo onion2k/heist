@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 6h10l-5 8z' fill='%2378b4ff'/><path d='M3 6l2-4h6l2 4z' fill='%23bcd8ff'/></svg>" />
+    <title>heist — the stones</title>
+    <style>
+      :root {
+        --bg: #0b0c0e;
+        --panel: #16181c;
+        --card: rgba(16, 18, 22, 0.82);
+        --line: #2a2e35;
+        --text: #d8dce3;
+        --dim: #838b98;
+        --accent: #c9a227;
+        --cool: #8fb8ff;
+        --good: #6fcf7f;
+        --warn: #e0a05f;
+        --bad: #e07a5f;
+        --f-table: #dfe9f7;
+        --f-crown0: #a9c4ea;
+        --f-crown1: #c3d6f0;
+        --f-girdle: #6f7f96;
+        --f-pav0: #7d9bc8;
+        --f-pav1: #5f7fb0;
+        --f-pav2: #4a6796;
+        --f-culet: #3a4f78;
+        --f-line: #0b0c0e;
+        --f-dim: #c9a227;
+        --f-text: #d8dce3;
+        --panel-w: clamp(240px, 19vw, 300px);
+        --overlay-w: clamp(300px, 26vw, 420px);
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+      #app { display: grid; grid-template-columns: var(--panel-w) minmax(0, 1fr); height: 100%; overflow: hidden; }
+      #panel { grid-column: 1; border-right: 1px solid var(--line); background: var(--panel); padding: 14px; overflow-y: auto; scrollbar-width: thin; }
+      #stage { grid-column: 2; position: relative; overflow: hidden; min-width: 0; min-height: 0; }
+      #stage canvas { display: block; position: absolute; top: 0; left: 0; }
+      h1 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 2px; }
+      .sub { color: var(--dim); margin: 0 0 14px; font-size: 11px; }
+      fieldset { border: 0; border-top: 1px solid var(--line); margin: 0 0 12px; padding: 10px 0 0; }
+      legend { color: var(--dim); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 0 6px 0 0; }
+      label.field { display: block; margin-bottom: 8px; }
+      .row { display: flex; justify-content: space-between; gap: 8px; color: var(--dim); font-size: 11px; margin-bottom: 2px; }
+      .row b { color: var(--text); font-weight: 500; white-space: nowrap; }
+      input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+      select { width: 100%; background: #0e1013; color: var(--text); border: 1px solid var(--line); border-radius: 3px; padding: 4px 6px; font: inherit; }
+      input[type=checkbox] { accent-color: var(--accent); margin-right: 6px; }
+      .check { color: var(--dim); font-size: 11px; display: flex; align-items: center; margin-bottom: 6px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 8px; }
+      .actions button, button.tab { background: transparent; border: 1px solid var(--line); border-radius: 3px; color: var(--dim); font: inherit; font-size: 10px; padding: 3px 7px; cursor: pointer; }
+      .actions button:hover, button.tab:hover { color: var(--text); border-color: var(--dim); }
+      button.tab.on { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+
+      /* the wait for the first frame */
+      #loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px; color: var(--dim); font-size: 12px; background: var(--bg); pointer-events: none; transition: opacity 0.4s; z-index: 5; }
+      #loading.done { opacity: 0; }
+      #loading .ring { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: turn 0.9s linear infinite; }
+      @keyframes turn { to { transform: rotate(360deg); } }
+
+      /* callouts drawn over the canvas, pointing at the stone */
+      #callouts { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 2; }
+      #callouts line { stroke: var(--accent); stroke-width: 1; opacity: 0.85; }
+      #callouts circle { fill: var(--accent); }
+      #calloutTags .tag { position: absolute; left: 0; top: 0; pointer-events: auto; font-size: 10px; line-height: 1.25; padding: 3px 6px; border-radius: 2px;
+        color: #f2d27a; background: rgba(11, 12, 14, 0.78); border: 1px solid rgba(201, 162, 39, 0.35); white-space: nowrap; }
+      #calloutTags .tag small { display: block; color: var(--dim); font-size: 9px; }
+      #calloutTags { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+
+      /* the information, laid over the right of the picture */
+      #overlay { position: absolute; top: 0; right: 0; bottom: 0; width: var(--overlay-w); padding: 12px; overflow-y: auto; scrollbar-width: thin; z-index: 4;
+        display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+      #overlay > * { pointer-events: auto; }
+      #overlay.hidden { display: none; }
+      .card { background: var(--card); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; }
+      .card h2 { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; display: flex; justify-content: space-between; }
+      .card h2 span { color: var(--dim); letter-spacing: 0; text-transform: none; font-weight: normal; }
+      .card h3 { font-size: 15px; font-weight: 500; margin: 0 0 2px; color: var(--text); }
+      .card p { margin: 4px 0 6px; color: var(--text); font-size: 11.5px; line-height: 1.5; }
+      .card p.dim, .card .dim { color: var(--dim); }
+      .card p.small { font-size: 10.5px; }
+      .card table { width: 100%; border-collapse: collapse; font-size: 11px; }
+      .card td { padding: 2px 0; color: var(--dim); vertical-align: top; }
+      .card td:last-child { text-align: right; color: var(--text); white-space: nowrap; }
+      .card td.l:last-child { text-align: left; white-space: normal; }
+      .card td.hi:last-child { color: var(--accent); }
+      .card td.good:last-child { color: var(--good); }
+      .card td.warn:last-child { color: var(--warn); }
+      .card tr.head td { color: var(--accent); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding-top: 6px; }
+      .card .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+      .card .chip { border: 1px solid var(--line); border-radius: 10px; padding: 1px 8px; font-size: 10px; color: var(--dim); }
+      .card .figures { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; margin: 4px 0; }
+      .card .figure { text-align: center; font-size: 10px; color: var(--dim); }
+      .card .figure svg { display: block; margin: 0 auto 2px; max-width: 100%; }
+      .plan .facet { cursor: pointer; transition: fill 0.1s; }
+      .plan .facet:hover, .plan .facet.on { fill: var(--accent) !important; }
+      .card .facetNote { min-height: 2.8em; font-size: 10.5px; color: var(--dim); border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 4px; }
+      .card .facetNote b { color: var(--text); font-weight: 500; }
+      .legend { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 10px; color: var(--dim); margin: 4px 0; }
+      .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; border: 1px solid var(--f-line); }
+      .stat { font-size: 22px; font-weight: 500; color: var(--text); line-height: 1.1; }
+      .stat small { font-size: 10px; color: var(--dim); display: block; font-weight: normal; }
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
+      .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px; }
+      .trace { font-size: 10px; color: var(--dim); }
+      .trace b { color: var(--good); font-weight: 500; }
+      .trace.busy b { color: var(--accent); }
+      .note { color: var(--bad); font-size: 10px; margin-top: 6px; }
+      kbd { font: inherit; font-size: 10px; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; color: var(--dim); }
+
+      @media (max-width: 1100px) {
+        :root { --panel-w: 210px; --overlay-w: 300px; }
+      }
+      @media (max-width: 760px) {
+        #app { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+        #panel { grid-column: 1; grid-row: 2; border-right: 0; border-top: 1px solid var(--line); max-height: 40vh; }
+        #stage { grid-column: 1; grid-row: 1; }
+        #overlay { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="panel">
+        <h1>heist</h1>
+        <p class="sub">A gemmologist's bench. The stone is drawn by a path tracer, and everything about it is measured off the model.</p>
+        <div id="controls"></div>
+      </div>
+      <div id="stage">
+        <div id="loading"><div class="ring"></div><div class="what">Starting the graphics device…</div></div>
+        <svg id="callouts"></svg>
+        <div id="calloutTags"></div>
+        <div id="overlay"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
