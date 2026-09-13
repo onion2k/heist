@@ -13,7 +13,10 @@ import { metals } from 'artshape-render/render/materials';
 import { Viewer, tableNames, type Quality, type TableName } from 'artshape-render/render/viewer';
 import { analyse, carats, type Analysis, type Facet } from './analysis';
 import { CUTS, cutKeys } from './cuts';
+import { colourChoices, colourNote, colouredMaterial } from './colours';
 import { clarityScale, SPECIES, speciesKeys } from './gems';
+import { meanRadiance } from 'artshape-render/render/hdr';
+import { LIGHTINGS, lightingByKey } from './lighting';
 import { calloutsFor, Callouts, cutCard, describeFacet, facetsCard, gradingCard, headerCard, opticsCard, stoneCard, TABS, type Specimen, type Tab } from './overlay';
 import { RIGS, rigNames } from './rigs';
 import { el, picker, section, slider, toggle } from './ui';
@@ -72,11 +75,14 @@ const state = {
   pose: 'standing' as Pose,
   clarity: 'VS1',
   colour: 'F',
+  tone: 1,
+  saturation: 1,
+  /** A baked preset, or one of the gemmologist's lights. */
+  lighting: 'studio',
   tab: 'cut' as Tab,
   overlay: true,
   callouts: true,
   quality: 'traced' as Quality,
-  environment: 'studio' as EnvPreset,
   table_: 'slate' as TableName,
   exposure: 1,
   envStrength: 0.35,
@@ -105,12 +111,14 @@ let piece = { span: 10, top: 2 };
 
 function specimen(): Specimen {
   const species = SPECIES[state.species];
-  const mat = metals[species.key];
+  const mat = metals[part.material?.metal ?? species.key] ?? metals[species.key];
   const scale = clarityScale(species);
+  const lighting = lightingByKey(state.lighting);
   return {
     species, cut: CUTS[state.cut], analysis,
     clarity: scale.find((g) => g.code === state.clarity) ?? scale[Math.min(3, scale.length - 1)],
-    colour: state.colour,
+    colour: { key: state.colour, ...colourNote(state.species, state.colour) },
+    lightingNote: lighting?.analysis ? lighting.note : undefined,
     material: { ior: mat.ior ?? 1.5, dispersion: mat.dispersion ?? 0, colour: mat.colour ?? [1, 1, 1], sparkle: mat.sparkle ?? 0 },
   };
 }
@@ -127,7 +135,8 @@ function build(reframe = false) {
     star: state.star ?? undefined, lowerHalf: state.lowerHalf ?? undefined, culet: state.culet ?? undefined,
   };
   part = gem(spec);
-  part.material = { metal: state.species, finish: 'polished' };
+  // the species' optics in the colour chosen, registered with the renderer under its own name
+  part.material = { metal: colouredMaterial(state.species, state.colour, state.tone, state.saturation), finish: 'polished' };
   analysis = analyse(part, CUTS[state.cut].bands);
 
   const assembly = new Assembly('stone');
@@ -196,7 +205,7 @@ function renderOverlay() {
     case 'stone': overlayEl.append(stoneCard(s)); break;
     case 'optics': overlayEl.append(opticsCard(s)); break;
     case 'grading':
-      overlayEl.append(gradingCard(s, (code) => { state.clarity = code; renderOverlay(); }, (code) => { state.colour = code; renderOverlay(); }));
+      overlayEl.append(gradingCard(s, (code) => { state.clarity = code; renderOverlay(); }, (code) => { state.colour = code; colourHost.replaceChildren(colourPicker()); build(); }));
       break;
   }
 }
@@ -243,11 +252,21 @@ function resetProportions() {
   tableSlider.hidden = state.cut === 'rose' || state.cut === 'cabochon';
 }
 
+const colourHost = el('div');
+const colourPicker = () => picker('colour', colourChoices(state.species), state.colour, (v) => { state.colour = v; build(); });
+colourHost.append(colourPicker());
+const toneSlider = slider('tone', 0.5, 1.6, 0.02, 1, (v) => (v < 0.98 ? `lighter ×${(1 / v).toFixed(2)}` : v > 1.02 ? `darker ×${v.toFixed(2)}` : 'as graded'), (v) => { state.tone = v; build(); });
+const saturationSlider = slider('saturation', 0, 1.6, 0.02, 1, (v) => (Math.abs(v - 1) < 0.02 ? 'as graded' : `${v.toFixed(2)}×`), (v) => { state.saturation = v; build(); });
+
 const stoneSet = section('Stone',
   picker('species', speciesKeys.map((k) => ({ value: k, label: SPECIES[k].name })), state.species, (v) => {
     state.species = v;
     const scale = clarityScale(SPECIES[v]);
     if (!scale.some((g) => g.code === state.clarity)) state.clarity = scale[Math.min(3, scale.length - 1)].code;
+    state.colour = v === 'diamond' ? 'F' : colourChoices(v)[0]?.value ?? '';
+    state.tone = 1; state.saturation = 1;
+    toneSlider.set(1); saturationSlider.set(1);
+    colourHost.replaceChildren(colourPicker());
     build();
   }),
   picker('cut', cutKeys.map((k) => ({ value: k, label: CUTS[k].name })), state.cut, (v) => {
@@ -265,6 +284,7 @@ const stoneSet = section('Stone',
     build(true);
   }),
   picker('pose', Object.keys(POSES), state.pose, (v) => { state.pose = v as Pose; build(true); }),
+  colourHost, toneSlider, saturationSlider,
 );
 function resetIfNatural() {
   if (state.length === null && state.depth === null && state.table === null && state.facets === null) resetProportions();
@@ -288,11 +308,33 @@ brilliantSet = section('The brilliant', crownAngleSlider, pavilionAngleSlider, s
 const proportionSet = section('Proportions', lengthSlider, depthSlider, tableSlider, facetsSlider, resetRow);
 
 const applyKey = () => {
-  viewer.setKeyLight({ elevation: state.keyElevation, azimuth: state.keyAzimuth, strength: state.keyStrength, warmth: state.keyWarmth, size: state.keySize });
-  viewer.setRig(RIGS[state.rig](state.keyAzimuth, state.keyStrength, piece));
+  // under an analysis map the map is the only light, or its colours would mean nothing
+  const analysis = !!lightingByKey(state.lighting)?.analysis;
+  viewer.setKeyLight({ elevation: state.keyElevation, azimuth: state.keyAzimuth, strength: analysis ? 0 : state.keyStrength, warmth: state.keyWarmth, size: state.keySize });
+  viewer.setRig(analysis ? [] : RIGS[state.rig](state.keyAzimuth, state.keyStrength, piece));
+};
+const applyLighting = () => {
+  const l = lightingByKey(state.lighting);
+  if (l) {
+    const img = l.image();
+    viewer.setEnvironmentImage(img, meanRadiance(img));
+    if (l.analysis) {
+      // read face up, as the instrument is
+      viewer.setView({ elevation: 1.55, distance: state.width * 5 });
+      viewer.setEnvStrength(1);
+    }
+  } else {
+    viewer.setEnvironment(state.lighting as EnvPreset);
+    viewer.setEnvStrength(state.envStrength);
+  }
+  applyKey();
+  renderOverlay();
 };
 const lightSet = section('Light',
-  picker('environment', ['studio', 'daylight', 'dusk', 'gallery'], state.environment, (v) => { state.environment = v as EnvPreset; viewer.setEnvironment(state.environment); }),
+  picker('light', [
+    ...['studio', 'daylight', 'dusk', 'gallery'].map((k) => ({ value: k, label: k })),
+    ...LIGHTINGS.map((l) => ({ value: l.key, label: `${l.name}${l.analysis ? ' (analysis)' : ''}` })),
+  ], state.lighting, (v) => { state.lighting = v; applyLighting(); }),
   picker('rig', rigNames, state.rig, (v) => { state.rig = v; applyKey(); }),
   slider('key', 0, 4, 0.05, state.keyStrength, (v) => `${v.toFixed(2)}×`, (v) => { state.keyStrength = v; applyKey(); }),
   slider('key elevation', 0, 1.55, 0.02, state.keyElevation, degrees, (v) => { state.keyElevation = v; applyKey(); }),
@@ -338,7 +380,7 @@ document.addEventListener('keydown', (e) => {
 // ---- go ----
 
 viewer.setQuality(state.quality);
-viewer.setEnvironment(state.environment);
+viewer.setEnvironment('studio');
 viewer.setEnvStrength(state.envStrength);
 viewer.setExposure(state.exposure);
 viewer.setTable(state.table_);

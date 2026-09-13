@@ -32,6 +32,21 @@ them, from the crown and pavilion angles, the star and lower-half lengths
 and the culet — take those too; the pose stands the stone on its culet,
 lays it table down, or turns it on its side.
 
+**The colour is real.** A diamond's letter from D to Z, or a fancy, and
+the trade's varieties of every other species — cornflower, padparadscha,
+pigeon's blood, Santa Maria, mandarin — are body colours the tracer
+carries, registered with the renderer's material table under the species'
+own optics; a tone and a saturation move them. The grading card says what
+the choice means; the picture shows it.
+
+**A gemmologist's lights.** Beside the renderer's baked skies, four
+environment maps heist paints itself: a grading lamp, a dark-field loupe,
+and the two cut-analysis instruments, the ASET and the ideal-scope, which
+colour every direction light can come from so that a stone face up shows,
+in red, green and blue, where its light is returned from and where it
+leaks. The key and the rig are put out while one is on, and the card over
+the picture says how to read it.
+
 **Measured, not typed.** Every number on the cards is read back off the
 mesh the renderer draws. The facets are recovered from the triangles
 (analysis.ts), classified into table, crown, girdle, pavilion and culet,
@@ -56,6 +71,8 @@ got. Draft and final are there for working in.
     src/diagrams.ts  the plan and elevation SVGs
     src/overlay.ts   the cards, and the callouts drawn over the canvas
     src/gems.ts      the species: composition, optics, sources, grading scales
+    src/colours.ts   the letters and the varieties, as materials the tracer carries
+    src/lighting.ts  the ASET, the ideal-scope, the dark-field and the grading lamp
     src/cuts.ts      the cuts: history, canonical facet counts, guide ranges
     src/rigs.ts      studio lighting presets, after the sketchbook's
 

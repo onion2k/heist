@@ -17,8 +17,10 @@ export interface Specimen {
   cut: CutInfo;
   analysis: Analysis;
   clarity: ClarityGrade;
-  /** Diamond only: a letter on the D–Z scale. */
-  colour: string;
+  /** The colour chosen: a letter or a fancy for diamond, a variety for the rest. */
+  colour: { key: string; name: string; note: string };
+  /** What the lighting means, when it is an analysis map rather than a light. */
+  lightingNote?: string;
   /** The renderer's material record for the species, as it traces with it. */
   material: { ior: number; dispersion: number; colour: [number, number, number]; sparkle: number };
 }
@@ -71,6 +73,7 @@ export function headerCard(s: Specimen): HTMLDivElement {
   );
   c.append(stats);
   c.append(el('p', 'small dim', `Weight is the model's volume, ${a.volume.toFixed(1)} mm³, at a specific gravity of ${s.species.gravity} — the cutter's estimate before the scales.`));
+  if (s.lightingNote) c.append(el('p', 'small', `<b>Reading the picture.</b> ${s.lightingNote}`));
   return c;
 }
 
@@ -270,16 +273,15 @@ export function gradingCard(s: Specimen, onClarity: (code: string) => void, onCo
     c.append(el('p', '', '<b>Colour.</b>'));
     const tabs = el('div', 'tabs');
     for (const g of DIAMOND_COLOUR) {
-      const b = el('button', `tab${g.code === s.colour ? ' on' : ''}`, g.code);
+      const b = el('button', `tab${g.code === s.colour.key ? ' on' : ''}`, g.code);
       b.title = g.band;
       b.addEventListener('click', () => onColour(g.code));
       tabs.append(b);
     }
     c.append(tabs);
-    const g = DIAMOND_COLOUR.find((x) => x.code === s.colour) ?? DIAMOND_COLOUR[0];
-    c.append(el('p', '', `<b>${g.code} — ${g.band}.</b> ${g.note}.`));
+    c.append(el('p', '', `<b>${s.colour.name}.</b> ${s.colour.note}. The stone is drawn in this colour: the letter is a body colour the tracer carries, not only a word.`));
   } else {
-    c.append(el('p', '', `<b>Colour.</b> A coloured stone is graded on hue, tone and saturation rather than a letter: ${sp.colourRange}. The cause is ${sp.chromophore}.`));
+    c.append(el('p', '', `<b>Colour: ${s.colour.name}.</b> ${s.colour.note}. A coloured stone is graded on hue, tone and saturation rather than a letter — the tone and saturation sliders in the panel move this one — and the range for ${sp.name.toLowerCase()} runs ${sp.colourRange}. The cause is ${sp.chromophore}.`));
   }
   return c;
 }
