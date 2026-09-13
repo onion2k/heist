@@ -29,6 +29,11 @@ try {
   viewer = await Viewer.create(stage, (info) => {
     waitingOn(`GPU device lost (${info.reason}): ${info.message || 'the GPU timed out'} — reload the page`);
     loading.classList.remove('done');
+  }, {
+    // a stone's paths run to sixteen bounces here, where the renderer's own
+    // six leave a diamond's pavilion dark: a fifth more a sample, and this
+    // is the one page that looks at nothing but the stone
+    gemBounces: 16,
   });
 } catch (err) {
   waitingOn(`The renderer is unavailable: ${(err as Error).message}. This needs WebGPU — a current Chrome, Edge or Safari.`);
